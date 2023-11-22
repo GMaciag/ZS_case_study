@@ -3,9 +3,9 @@
 
 # Load tidyverse for handling files
 library(tidyverse)
-# Load ggplot2 for plotting
+# Load libraries for plotting
 library(ggplot2)
-# Load pheatmap to plot heatmaps
+library(ggpubr)
 library(pheatmap)
 # The following setting is important, do not omit
 options(stringsAsFactors = FALSE)
@@ -32,7 +32,15 @@ HpaConsensus_wide_noNA <- HpaConsensus_wide %>%
 # Sanity check
 'IGF2R' %in% HpaConsensus_wide_noNA$Gene_name
 
+# EXPLORE IGF2R -----------------------------------------------------------
 
+# Plot barplot of IGF2R expression across tissues
+ggplot(data=HpaConsensus[HpaConsensus$Gene_name=="IGF2R",], aes(x=reorder(Tissue, -nTPM), y=nTPM)) +
+  geom_bar(stat="identity", fill="steelblue") +
+  ylab("Normalized transcript expression") +
+  xlab("Tissue") +
+  theme_pubr() +
+  guides(x =  guide_axis(angle = 90))
 
-
+ggsave("plots/IGF2R_expression.pdf", device = "pdf")
 
