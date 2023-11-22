@@ -1,8 +1,9 @@
 
 # LOAD LIBRARIES ----------------------------------------------------------
 
-# Load tidyverse for handling files
+# Load libraries for handling files
 library(tidyverse)
+library(reshape2)
 # Load libraries for plotting
 library(ggplot2)
 library(ggpubr)
@@ -23,9 +24,8 @@ HpaConsensus
 HpaConsensus <- HpaConsensus[, -1]
 # Rename a column to remove whitespace
 HpaConsensus <- HpaConsensus %>% rename(Gene_name = `Gene name`)
-# Reshape from long to wide
-HpaConsensus_wide <- HpaConsensus %>% 
-  pivot_wider(names_from = Tissue, values_from = nTPM, values_fn = list)
+# Transform the data from long to wide format
+HpaConsensus_wide <- dcast(HpaConsensus, Gene_name ~ Tissue, value.var = "nTPM", fun.aggregate = mean, na.rm = TRUE)
 # Remove rows containing NA values
 HpaConsensus_wide_noNA <- HpaConsensus_wide %>% 
   drop_na()
@@ -43,4 +43,5 @@ ggplot(data=HpaConsensus[HpaConsensus$Gene_name=="IGF2R",], aes(x=reorder(Tissue
   guides(x =  guide_axis(angle = 90))
 
 ggsave("plots/IGF2R_expression.pdf", device = "pdf")
+
 
