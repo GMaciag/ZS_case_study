@@ -73,10 +73,15 @@ corr_vector_high <- corr_vector[corr_vector>0.7, ,drop=FALSE]
 # Save the highly correlated genes genes to a csv file
 write.csv(corr_vector_high, "output/corr_spear_07.csv", row.names=TRUE)
 # Select the most highly correlated genes (including IGF2R)
-selected_genes <- c("IGF2R", rownames(corr_vector_high))
+select_genes_corr_high <- c("IGF2R", rownames(corr_vector_high))
 # Subset the main dataset based on high correlation with IGF2R
-HpaConsensus_df_subset <- as.matrix(HpaConsensus_df[rownames(HpaConsensus_df) %in% selected_genes,])
-scaled_mat = t(scale(t(HpaConsensus_df_subset), center=TRUE))
+HpaConsensus_corr_high <- HpaConsensus_df[rownames(HpaConsensus_df) %in% select_genes_corr_high,] %>% 
+  as.matrix()
+# Scale and center
+scaled_mat = HpaConsensus_corr_high %>% 
+  t() %>% 
+  scale(center = TRUE) %>% 
+  t()
 
 # K-MEANS CLUSTERING ------------------------------------------------------
 
@@ -100,8 +105,36 @@ igf2r_clust <- k4$cluster[[which(names(k4$cluster)=='IGF2R')]]
 # Get the list of genes in the same cluster as IGF2R
 target_genes <- names(k4$cluster[k4$cluster==1])
 # Save the list of target genes
-write.csv(target_genes, "output/target_genes.csv", row.names=TRUE)
+target_genes %>% 
+  as.data.frame() %>% 
+  setNames("IGF2R target genes") %>% 
+  write.csv("output/target_genes.csv", row.names=TRUE)
 
+# HEATMAP -----------------------------------------------------------------
 
+# Subset the scaled matrix to include target genes and IGF2R
+scaled_mat_target_genes <- scaled_mat[rownames(scaled_mat) %in% c("IGF2R", target_genes),]
 
+# Create grouping of rows to highlight IGF2R on the heatmap
+which_row_igf2r = which(grepl("IGF2R", rownames(scaled_mat_target_genes))) # Which row is IGF2R in
+# Create a split of scaled_mat_target_genes rows that singles out IGF2R
+split = data.frame(x = c(rep("A", which_row_igf2r - 1), "B",
+                         rep("C", nrow(scaled_mat_target_genes) - which_row_igf2r)))
 
+# Plot a heatmap of the target genes and cluster tissues 
+set.seed(2023)
+ht <- Heatmap(scaled_mat_target_genes, 
+              show_row_names = TRUE,
+              cluster_rows = FALSE,
+              row_split = split,
+              row_title = NULL,
+              clustering_distance_rows='spearman',
+              clustering_distance_columns='spearman',
+              name = "Z-score", 
+              column_km = 4, # k-means clustering 
+              column_km_repeats=50)
+draw(ht)
+# Save the heatmap to file
+pdf("plots/target_genes_heatmap.pdf", width=9, height=7)
+draw(ht)
+dev.off()
