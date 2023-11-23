@@ -157,10 +157,25 @@ GOtest <- goana(de=target_genes_entrez, universe=universe, species="Hs")
 GOtopten <- GOtest %>% 
   rownames_to_column('ID') %>% 
   filter(N<2000) %>% 
+  filter(N>10) %>% 
   column_to_rownames('ID') %>% 
   topGO(ontology="BP", number=10)
 # Save top 10 GO results to file
 write.csv(file = "output_files/top10_GO.csv", x = GOtopten, quote = FALSE)
+
+# Plot the top 10 GO terms as a barplot
+GOtopten$Term <- factor(GOtopten$Term, levels = GOtopten$Term[order(-log(GOtopten$P.DE))])  # Convert Term to factor to maintain the order
+GOtopten$Label <- paste(GOtopten$DE, "/", GOtopten$N, sep = "") # Create a new column for DE/N labels
+ggplot(GOtopten, aes(x = -log(P.DE), y = Term)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Label), 
+            position = position_dodge(width = 0.9), 
+            hjust = 1.25,
+            color="white") +
+  labs(x = "Negative log(p.value)", y = "Term") +
+  theme_pubr() +
+  theme(axis.text.y = element_text(angle = 0, hjust = 1))
+ggsave("output_plots/top10GO.pdf", device = "pdf", width = 8, height = 4)
 
 # Run KEGG pathway analysis
 KEGGtest <- kegga(de = target_genes_entrez, universe = universe, species = "Hs")
@@ -168,10 +183,25 @@ KEGGtest <- kegga(de = target_genes_entrez, universe = universe, species = "Hs")
 KEGGtopten <- KEGGtest %>% 
   rownames_to_column('ID') %>% 
   filter(N<2000) %>% 
+  filter(N>10) %>% 
   column_to_rownames('ID') %>% 
   topKEGG(number=10)
 # Save top 10 GO results to file
 write.csv(file = "output_files/top10_KEGG.csv", x = KEGGtopten, quote = FALSE)
+
+# Plot the top 10 KEGG terms as a barplot
+KEGGtopten$Pathway <- factor(KEGGtopten$Pathway, levels = KEGGtopten$Pathway[order(-log(KEGGtopten$P.DE))]) # Convert Pathway to factor to maintain the order
+KEGGtopten$Label <- paste(KEGGtopten$DE, "/", KEGGtopten$N, sep = "") # Create a new column for DE/N labels
+ggplot(KEGGtopten, aes(x = -log(P.DE), y = Pathway)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Label), 
+            position = position_dodge(width = 0.9), 
+            hjust = 1.25,
+            color="white") +
+  labs(x = "Negative log(p.value)", y = "Pathway") +
+  theme_pubr() +
+  theme(axis.text.y = element_text(angle = 0, hjust = 1))
+ggsave("output_plots/top10KEGG.pdf", device = "pdf", width = 8, height = 4)
 
 # BONUS QUESTION 1 --------------------------------------------------------
 

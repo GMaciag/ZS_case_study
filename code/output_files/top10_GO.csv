@@ -1,11 +1,11 @@
 ,Term,Ont,N,DE,P.DE
 GO:0033138,positive regulation of peptidyl-serine phosphorylation,BP,74,3,0.000248470404153759
 GO:0033135,regulation of peptidyl-serine phosphorylation,BP,103,3,0.000656514497510272
-GO:1904895,ESCRT complex assembly,BP,1,1,0.00167425663005616
-GO:1904902,ESCRT III complex assembly,BP,1,1,0.00167425663005616
-GO:0097010,eukaryotic translation initiation factor 4F complex assembly,BP,1,1,0.00167425663005616
-GO:0071919,G-quadruplex DNA formation,BP,1,1,0.00167425663005616
-GO:1905537,positive regulation of eukaryotic translation initiation factor 4F complex assembly,BP,1,1,0.00167425663005616
-GO:1905612,positive regulation of mRNA cap binding,BP,1,1,0.00167425663005616
-GO:1905535,regulation of eukaryotic translation initiation factor 4F complex assembly,BP,1,1,0.00167425663005616
-GO:1905610,regulation of mRNA cap binding,BP,1,1,0.00167425663005616
+GO:0018193,peptidyl-amino acid modification,BP,801,6,0.00171998651065694
+GO:0002183,cytoplasmic translational initiation,BP,38,2,0.00182329385350362
+GO:1900087,positive regulation of G1/S transition of mitotic cell cycle,BP,38,2,0.00182329385350362
+GO:0002181,cytoplasmic translation,BP,150,3,0.00194318508615969
+GO:0048009,insulin-like growth factor receptor signaling pathway,BP,47,2,0.00277794396178041
+GO:1902808,positive regulation of cell cycle G1/S phase transition,BP,49,2,0.00301589227248303
+GO:0016032,viral process,BP,389,4,0.0037184723243041
+GO:0035019,somatic stem cell population maintenance,BP,59,2,0.00434324429632976
