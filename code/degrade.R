@@ -78,6 +78,29 @@ selected_genes <- c("IGF2R", rownames(corr_vector_high))
 HpaConsensus_df_subset <- as.matrix(HpaConsensus_df[rownames(HpaConsensus_df) %in% selected_genes,])
 scaled_mat = t(scale(t(HpaConsensus_df_subset), center=TRUE))
 
+# K-MEANS CLUSTERING ------------------------------------------------------
+
+# Compute gap statistic to check for optimal number of clusters
+set.seed(2023) # Set the seed before each run to create reproducible results
+gap_stat <- clusGap(scaled_mat, FUN = kmeans, nstart = 25,
+                    K.max = 10, B = 50)
+# Visualise the gap statstic results
+set.seed(2023) 
+fviz_gap_stat(gap_stat) # k = 4
+ggsave("plots/gap_stat.pdf", device = "pdf")
+# Compute k-means clustering with the optimal k = 4
+set.seed(2023)
+k4 <- kmeans(scaled_mat, centers = 4, nstart = 25)
+# Visualise the clustering results on a PCA plot
+set.seed(2023)
+fviz_cluster(k4, data = scaled_mat)
+ggsave("plots/clustering_k4.pdf", device = "pdf")
+# Extract the number of the cluster containg IGF2R
+igf2r_clust <- k4$cluster[[which(names(k4$cluster)=='IGF2R')]]
+# Get the list of genes in the same cluster as IGF2R
+target_genes <- names(k4$cluster[k4$cluster==1])
+# Save the list of target genes
+write.csv(target_genes, "output/target_genes.csv", row.names=TRUE)
 
 
 
