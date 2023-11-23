@@ -1,0 +1,11 @@
+,Term,Ont,N,DE,P.DE
+GO:0033138,positive regulation of peptidyl-serine phosphorylation,BP,74,3,0.000248470404153759
+GO:0033135,regulation of peptidyl-serine phosphorylation,BP,103,3,0.000656514497510272
+GO:1904895,ESCRT complex assembly,BP,1,1,0.00167425663005616
+GO:1904902,ESCRT III complex assembly,BP,1,1,0.00167425663005616
+GO:0097010,eukaryotic translation initiation factor 4F complex assembly,BP,1,1,0.00167425663005616
+GO:0071919,G-quadruplex DNA formation,BP,1,1,0.00167425663005616
+GO:1905537,positive regulation of eukaryotic translation initiation factor 4F complex assembly,BP,1,1,0.00167425663005616
+GO:1905612,positive regulation of mRNA cap binding,BP,1,1,0.00167425663005616
+GO:1905535,regulation of eukaryotic translation initiation factor 4F complex assembly,BP,1,1,0.00167425663005616
+GO:1905610,regulation of mRNA cap binding,BP,1,1,0.00167425663005616

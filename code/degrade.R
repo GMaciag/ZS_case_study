@@ -11,6 +11,9 @@ library(ComplexHeatmap)
 # Load libraries for clustering and visualisation
 library(cluster)    
 library(factoextra) 
+# Load package for GO and KEGG analysis
+library(limma)
+library(org.Hs.eg.db)
 # The following setting is important, do not omit
 options(stringsAsFactors = FALSE)
 
@@ -26,7 +29,7 @@ HpaConsensus
 # Remove the unnecessary data field
 HpaConsensus <- HpaConsensus[, -1]
 # Rename a column to remove whitespace
-HpaConsensus <- HpaConsensus %>% rename(Gene_name = `Gene name`)
+HpaConsensus <- HpaConsensus %>% dplyr::rename(Gene_name = `Gene name`)
 # Transform the data from long to wide format
 HpaConsensus_df <- dcast(HpaConsensus, Gene_name ~ Tissue, value.var = "nTPM", fun.aggregate = mean, na.rm = TRUE)
 # Remove rows containing NA values
@@ -50,7 +53,7 @@ ggplot(data=HpaConsensus[HpaConsensus$Gene_name=="IGF2R",], aes(x=reorder(Tissue
   xlab("Tissue") +
   theme_pubr() +
   guides(x =  guide_axis(angle = 90))
-ggsave("plots/IGF2R_expression.pdf", device = "pdf")
+ggsave("output_plots/IGF2R_expression.pdf", device = "pdf")
 
 # CALCULATE CORRELATION -----------------------------------------------------------------
 
@@ -71,12 +74,13 @@ head(corr_vector)
 # Keep only genes with high (>0.7) correlation
 corr_vector_high <- corr_vector[corr_vector>0.7, ,drop=FALSE]
 # Save the highly correlated genes genes to a csv file
-write.csv(corr_vector_high, "output/corr_spear_07.csv", row.names=TRUE)
+write.csv(corr_vector_high, "output_files/corr_spear_07.csv", row.names=TRUE)
 # Select the most highly correlated genes (including IGF2R)
 select_genes_corr_high <- c("IGF2R", rownames(corr_vector_high))
 # Subset the main dataset based on high correlation with IGF2R
 HpaConsensus_corr_high <- HpaConsensus_df[rownames(HpaConsensus_df) %in% select_genes_corr_high,] %>% 
   as.matrix()
+
 # Scale and center
 scaled_mat = HpaConsensus_corr_high %>% 
   t() %>% 
@@ -92,15 +96,17 @@ gap_stat <- clusGap(scaled_mat, FUN = kmeans, nstart = 25,
 # Visualise the gap statstic results
 set.seed(2023) 
 fviz_gap_stat(gap_stat) # k = 4
-ggsave("plots/gap_stat.pdf", device = "pdf")
+ggsave("output_plots/gap_stat.pdf", device = "pdf")
+
 # Compute k-means clustering with the optimal k = 4
 set.seed(2023)
 k4 <- kmeans(scaled_mat, centers = 4, nstart = 25)
 # Visualise the clustering results on a PCA plot
 set.seed(2023)
 fviz_cluster(k4, data = scaled_mat)
-ggsave("plots/clustering_k4.pdf", device = "pdf")
-# Extract the number of the cluster containg IGF2R
+ggsave("output_plots/clustering_k4.pdf", device = "pdf")
+
+# Extract the number of the cluster containing IGF2R
 igf2r_clust <- k4$cluster[[which(names(k4$cluster)=='IGF2R')]]
 # Get the list of genes in the same cluster as IGF2R
 target_genes <- names(k4$cluster[k4$cluster==1])
@@ -108,7 +114,7 @@ target_genes <- names(k4$cluster[k4$cluster==1])
 target_genes %>% 
   as.data.frame() %>% 
   setNames("IGF2R target genes") %>% 
-  write.csv("output/target_genes.csv", row.names=TRUE)
+  write.csv("output_files/target_genes.csv", row.names=TRUE)
 
 # HEATMAP -----------------------------------------------------------------
 
@@ -135,6 +141,44 @@ ht <- Heatmap(scaled_mat_target_genes,
               column_km_repeats=50)
 draw(ht)
 # Save the heatmap to file
-pdf("plots/target_genes_heatmap.pdf", width=9, height=7)
+pdf("output_plots/target_genes_heatmap.pdf", width=9, height=7)
 draw(ht)
 dev.off()
+
+# GO AND KEGG ANALYSIS ----------------------------------------------------
+
+# Take all of the genes in the original dataset as the universe for enrichment testing
+universe <- rownames(HpaConsensus_df)
+# Convert gene symbols to Entrez Gene IDs
+target_genes_entrez <- mapIds(org.Hs.eg.db, keys = target_genes, keytype = "SYMBOL", column = "ENTREZID")
+universe <- mapIds(org.Hs.eg.db, keys = universe, keytype = "SYMBOL", column = "ENTREZID")
+# Remove any NA values (genes not found in the database)
+target_genes_entrez <- target_genes_entrez[!is.na(target_genes_entrez)]
+universe <- universe[!is.na(universe)]
+
+# Run GO enrichment analysis
+GOtest <- goana(de=target_genes_entrez, universe=universe, species="Hs")
+# Summarise GO analysis results
+GOtopten <- GOtest %>% 
+  rownames_to_column('ID') %>% 
+  filter(N<2000) %>% 
+  column_to_rownames('ID') %>% 
+  topGO(ontology="BP", number=10)
+# Save top 10 GO results to file
+write.csv(file = "output_files/top10_GO.csv", x = GOtopten, quote = FALSE)
+
+# Run KEGG pathway analysis
+KEGGtest <- kegga(de = target_genes_entrez, universe = universe, species = "Hs")
+# Summarise GO analysis results
+KEGGtopten <- KEGGtest %>% 
+  rownames_to_column('ID') %>% 
+  filter(N<2000) %>% 
+  column_to_rownames('ID') %>% 
+  topKEGG(number=10)
+# Save top 10 GO results to file
+write.csv(file = "output_files/top10_KEGG.csv", x = KEGGtopten, quote = FALSE)
+
+
+
+
+
