@@ -115,22 +115,21 @@ target_genes %>%
 # HEATMAP -----------------------------------------------------------------
 
 # Subset the scaled matrix to include target genes and IGF2R
-scaled_mat_target_genes <- HpaConsensus_scaled_mat_corr_high[rownames(HpaConsensus_scaled_mat_corr_high) %in% c("IGF2R", target_genes),]
+target_genes_scaled_mat <- HpaConsensus_scaled_mat_corr_high[rownames(HpaConsensus_scaled_mat_corr_high) %in% c("IGF2R", target_genes),]
 
 # Create grouping of rows to highlight IGF2R on the heatmap
-which_row_igf2r = which(grepl("IGF2R", rownames(scaled_mat_target_genes))) # Which row is IGF2R in
+which_row_igf2r = which(grepl("IGF2R", rownames(target_genes_scaled_mat))) # Which row is IGF2R in
 # Create a split of scaled_mat_target_genes rows that singles out IGF2R
 split = data.frame(x = c(rep("A", which_row_igf2r - 1), "B",
-                         rep("C", nrow(scaled_mat_target_genes) - which_row_igf2r)))
+                         rep("C", nrow(target_genes_scaled_mat) - which_row_igf2r)))
 
 # Plot a heatmap of the target genes and cluster tissues 
 set.seed(2023)
-ht <- Heatmap(scaled_mat_target_genes, 
+ht <- Heatmap(target_genes_scaled_mat, 
               show_row_names = TRUE,
               cluster_rows = FALSE,
               row_split = split,
               row_title = NULL,
-              clustering_distance_rows='spearman',
               clustering_distance_columns='spearman',
               name = "Z-score", 
               column_km = 4, # k-means clustering 
@@ -173,3 +172,31 @@ KEGGtopten <- KEGGtest %>%
   topKEGG(number=10)
 # Save top 10 GO results to file
 write.csv(file = "output_files/top10_KEGG.csv", x = KEGGtopten, quote = FALSE)
+
+# BONUS QUESTION 1 --------------------------------------------------------
+
+# Does your analysis give any evidence to whether or not we can expect to degrade any of these proteins? 
+relevant_genes <- c(
+  'PCSK9',
+  'TARDBP',
+  'UCP2',
+  'DCN',
+  'APOD'
+)
+# Are those genes among the 75 highly correlated genes?
+relevant_genes %in% rownames(corr_vector_high) # No
+
+# Subset the scaled matrix to include the relevant genes and IGF2R
+relevant_genes_scaled_mat <- HpaConsensus_scaled_mat[rownames(HpaConsensus_scaled_mat) %in% c("IGF2R", relevant_genes),]
+# Plot a heatmap of the target genes and cluster tissues 
+set.seed(2023)
+ht <- Heatmap(relevant_genes_scaled_mat, 
+              show_row_names = TRUE,
+              cluster_rows = FALSE,
+              clustering_distance_columns='spearman',
+              name = "Z-score")
+draw(ht)
+# Save the heatmap to file
+pdf("output_plots/relevant_genes_heatmap_bonus1.pdf", width=9, height=5)
+draw(ht)
+dev.off()
