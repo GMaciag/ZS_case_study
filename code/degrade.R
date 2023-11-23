@@ -167,11 +167,12 @@ write.csv(file = "output_files/top10_GO.csv", x = GOtopten, quote = FALSE)
 GOtopten$Term <- factor(GOtopten$Term, levels = GOtopten$Term[order(-log(GOtopten$P.DE))])  # Convert Term to factor to maintain the order
 GOtopten$Label <- paste(GOtopten$DE, "/", GOtopten$N, sep = "") # Create a new column for DE/N labels
 ggplot(GOtopten, aes(x = -log(P.DE), y = Term)) +
-  geom_bar(stat = "identity") +
+  geom_bar(stat = "identity",
+           fill = '#E0A96D') +
   geom_text(aes(label = Label), 
             position = position_dodge(width = 0.9), 
             hjust = 1.25,
-            color="white") +
+            color="#000080") +
   labs(x = "Negative log(p.value)", y = "Term") +
   theme_pubr() +
   theme(axis.text.y = element_text(angle = 0, hjust = 1))
@@ -193,11 +194,12 @@ write.csv(file = "output_files/top10_KEGG.csv", x = KEGGtopten, quote = FALSE)
 KEGGtopten$Pathway <- factor(KEGGtopten$Pathway, levels = KEGGtopten$Pathway[order(-log(KEGGtopten$P.DE))]) # Convert Pathway to factor to maintain the order
 KEGGtopten$Label <- paste(KEGGtopten$DE, "/", KEGGtopten$N, sep = "") # Create a new column for DE/N labels
 ggplot(KEGGtopten, aes(x = -log(P.DE), y = Pathway)) +
-  geom_bar(stat = "identity") +
+  geom_bar(stat = "identity",
+           fill = '#E0A96D') +
   geom_text(aes(label = Label), 
             position = position_dodge(width = 0.9), 
             hjust = 1.25,
-            color="white") +
+            color="#000080") +
   labs(x = "Negative log(p.value)", y = "Pathway") +
   theme_pubr() +
   theme(axis.text.y = element_text(angle = 0, hjust = 1))
