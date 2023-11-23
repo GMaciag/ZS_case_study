@@ -7,7 +7,10 @@ library(reshape2)
 # Load libraries for plotting
 library(ggplot2)
 library(ggpubr)
-library(pheatmap)
+library(ComplexHeatmap)
+# Load libraries for clustering and visualisation
+library(cluster)    
+library(factoextra) 
 # The following setting is important, do not omit
 options(stringsAsFactors = FALSE)
 
@@ -47,7 +50,6 @@ ggplot(data=HpaConsensus[HpaConsensus$Gene_name=="IGF2R",], aes(x=reorder(Tissue
   xlab("Tissue") +
   theme_pubr() +
   guides(x =  guide_axis(angle = 90))
-
 ggsave("plots/IGF2R_expression.pdf", device = "pdf")
 
 # CALCULATE CORRELATION -----------------------------------------------------------------
@@ -63,10 +65,18 @@ corr_vector <- Igf2r_expression %>%
 corr_vector <- corr_vector[order(-corr_vector$IGF2R, decreasing = FALSE), , drop = FALSE]
 # Print top 10 correlated genes
 head(corr_vector)
-# Save top 1000 genes to a csv file
-write.csv(head(corr_vector, n=1000), "output/top1000_corr_spear.csv", row.names=TRUE)
 
+# SUBSET AND SCALE -----------------------------------------------------------------
 
+# Keep only genes with high (>0.7) correlation
+corr_vector_high <- corr_vector[corr_vector>0.7, ,drop=FALSE]
+# Save the highly correlated genes genes to a csv file
+write.csv(corr_vector_high, "output/corr_spear_07.csv", row.names=TRUE)
+# Select the most highly correlated genes (including IGF2R)
+selected_genes <- c("IGF2R", rownames(corr_vector_high))
+# Subset the main dataset based on high correlation with IGF2R
+HpaConsensus_df_subset <- as.matrix(HpaConsensus_df[rownames(HpaConsensus_df) %in% selected_genes,])
+scaled_mat = t(scale(t(HpaConsensus_df_subset), center=TRUE))
 
 
 
