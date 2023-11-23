@@ -44,6 +44,12 @@ HpaConsensus_df <- HpaConsensus_df %>%
 rownames(HpaConsensus_df) <- HpaConsensus_df$Gene_name
 HpaConsensus_df <- subset(HpaConsensus_df, select=-Gene_name)
 
+# Scale and center
+HpaConsensus_scaled_mat = HpaConsensus_df %>% 
+  t() %>% 
+  scale(center = TRUE) %>% 
+  t()
+
 # EXPLORE IGF2R -----------------------------------------------------------
 
 # Plot barplot of IGF2R expression across tissues
@@ -55,21 +61,18 @@ ggplot(data=HpaConsensus[HpaConsensus$Gene_name=="IGF2R",], aes(x=reorder(Tissue
   guides(x =  guide_axis(angle = 90))
 ggsave("output_plots/IGF2R_expression.pdf", device = "pdf")
 
-# CALCULATE CORRELATION -----------------------------------------------------------------
+# CALCULATE CORRELATION AND SUBSET DATASET -----------------------------------------------------------------
 
 # Save expression of the gene of interest to a separate variable
-Igf2r_expression <- HpaConsensus_df["IGF2R",]
+Igf2r_expression <- HpaConsensus_scaled_mat["IGF2R",]
 # Calculate the correlation vector between IGF2R expression across tissues and all other genes in the dataset
 corr_vector <- Igf2r_expression %>% 
-  t() %>% 
-  cor(., t(HpaConsensus_df[rownames(HpaConsensus_df)!="IGF2R",]), method = "spearman") %>% # Don't correlate IGF2R with itself
-  t() %>% as.data.frame()
+  cor(., t(HpaConsensus_scaled_mat[rownames(HpaConsensus_scaled_mat)!="IGF2R",]), method = "spearman") %>% # Don't correlate IGF2R with itself
+  t() %>% as.data.frame() %>% setNames("IGF2R correlation")
 # Order the correlation vector by value
 corr_vector <- corr_vector[order(-corr_vector$IGF2R, decreasing = FALSE), , drop = FALSE]
 # Print top 10 correlated genes
 head(corr_vector)
-
-# SUBSET AND SCALE -----------------------------------------------------------------
 
 # Keep only genes with high (>0.7) correlation
 corr_vector_high <- corr_vector[corr_vector>0.7, ,drop=FALSE]
@@ -78,20 +81,13 @@ write.csv(corr_vector_high, "output_files/corr_spear_07.csv", row.names=TRUE)
 # Select the most highly correlated genes (including IGF2R)
 select_genes_corr_high <- c("IGF2R", rownames(corr_vector_high))
 # Subset the main dataset based on high correlation with IGF2R
-HpaConsensus_corr_high <- HpaConsensus_df[rownames(HpaConsensus_df) %in% select_genes_corr_high,] %>% 
-  as.matrix()
-
-# Scale and center
-scaled_mat = HpaConsensus_corr_high %>% 
-  t() %>% 
-  scale(center = TRUE) %>% 
-  t()
+HpaConsensus_scaled_mat_corr_high <- HpaConsensus_scaled_mat[rownames(HpaConsensus_scaled_mat) %in% select_genes_corr_high,]
 
 # K-MEANS CLUSTERING ------------------------------------------------------
 
 # Compute gap statistic to check for optimal number of clusters
 set.seed(2023) # Set the seed before each run to create reproducible results
-gap_stat <- clusGap(scaled_mat, FUN = kmeans, nstart = 25,
+gap_stat <- clusGap(HpaConsensus_scaled_mat_corr_high, FUN = kmeans, nstart = 25,
                     K.max = 10, B = 50)
 # Visualise the gap statstic results
 set.seed(2023) 
@@ -100,10 +96,10 @@ ggsave("output_plots/gap_stat.pdf", device = "pdf")
 
 # Compute k-means clustering with the optimal k = 4
 set.seed(2023)
-k4 <- kmeans(scaled_mat, centers = 4, nstart = 25)
+k4 <- kmeans(HpaConsensus_scaled_mat_corr_high, centers = 4, nstart = 25)
 # Visualise the clustering results on a PCA plot
 set.seed(2023)
-fviz_cluster(k4, data = scaled_mat)
+fviz_cluster(k4, data = HpaConsensus_scaled_mat_corr_high)
 ggsave("output_plots/clustering_k4.pdf", device = "pdf")
 
 # Extract the number of the cluster containing IGF2R
@@ -119,7 +115,7 @@ target_genes %>%
 # HEATMAP -----------------------------------------------------------------
 
 # Subset the scaled matrix to include target genes and IGF2R
-scaled_mat_target_genes <- scaled_mat[rownames(scaled_mat) %in% c("IGF2R", target_genes),]
+scaled_mat_target_genes <- HpaConsensus_scaled_mat_corr_high[rownames(HpaConsensus_scaled_mat_corr_high) %in% c("IGF2R", target_genes),]
 
 # Create grouping of rows to highlight IGF2R on the heatmap
 which_row_igf2r = which(grepl("IGF2R", rownames(scaled_mat_target_genes))) # Which row is IGF2R in
@@ -177,8 +173,3 @@ KEGGtopten <- KEGGtest %>%
   topKEGG(number=10)
 # Save top 10 GO results to file
 write.csv(file = "output_files/top10_KEGG.csv", x = KEGGtopten, quote = FALSE)
-
-
-
-
-
