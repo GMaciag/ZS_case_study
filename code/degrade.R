@@ -108,6 +108,7 @@ igf2r_clust <- k4$cluster[[which(names(k4$cluster)=='IGF2R')]]
 target_genes <- names(k4$cluster[k4$cluster==1])
 # Save the list of target genes
 target_genes %>% 
+  setdiff("IGF2R") %>% 
   as.data.frame() %>% 
   setNames("IGF2R target genes") %>% 
   write.csv("output_files/target_genes.csv", row.names=TRUE)
